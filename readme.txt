@@ -1,0 +1,1 @@
+Chess game with GUI and an AI opponent
