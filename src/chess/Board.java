@@ -13,9 +13,7 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -438,9 +436,10 @@ public class Board {
         }
     }
     
+    //Renders all elements of the game board
     public void render(Graphics g)
     {
-        boolean darkSquare = false;
+        boolean darkSquare = false; //Used for alternating between light squares and dark squares on chessboard
         
         for (int i = 0; i < 8; i++)
         {
@@ -456,7 +455,7 @@ public class Board {
                 if (j == selected.x && i == selected.y)
                     g.setColor(SELECTED_COL);
                 
-                if (player1.getPremove() != null && allowPremoves)
+                if (player1.getPremove() != null && allowPremoves) //Render premove highlight if applicable
                 {
                     if (j == player1.getPremove().getStartSquare().x && i == player1.getPremove().getStartSquare().y)
                         g.setColor(PREMOVE_COL);
@@ -466,7 +465,7 @@ public class Board {
                 
                 g.fillRect(POSITION[0]+j*SQUARE_SIZE, POSITION[1]+i*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
                 
-                if (!blindfold)
+                if (!blindfold) //Render piece at board position if blindfold isn't enabled
                     renderPiece(g, BOARD[i][j], POSITION[0]+j*SQUARE_SIZE, POSITION[1]+i*SQUARE_SIZE);
                 
                 darkSquare = !darkSquare;
@@ -476,7 +475,7 @@ public class Board {
         
         if (selected.x != -1 && selected.y != -1)
         {
-            renderPossibleMoves(g, selected);
+            renderPossibleMoves(g, selected); //Render possible moves of selected piece
         }
         
         g.setColor(Color.GRAY);
@@ -487,6 +486,7 @@ public class Board {
         
         double time = clock.getWhiteTime();
         
+        //Calculate minutes and seconds
         int m = (int)time/60;
         double s = time%60;
         
@@ -507,7 +507,7 @@ public class Board {
             seconds = "0" + seconds;
         }
         
-        g.drawString(minutes+":"+seconds, WHITE_CLOCK_POSITION[0], WHITE_CLOCK_POSITION[1]);
+        g.drawString(minutes+":"+seconds, WHITE_CLOCK_POSITION[0], WHITE_CLOCK_POSITION[1]); //Render clock time
         
         time = clock.getBlackTime();
         
@@ -557,14 +557,15 @@ public class Board {
                  g.fillRect(PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*0+20, SQUARE_SIZE, SQUARE_SIZE);
                  break;
          }
-            
+         
+         //Draw promotion options
          g.drawImage(WHITE_KNIGHT, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*0+20, null);
          g.drawImage(WHITE_BISHOP, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*1+20, null);
          g.drawImage(WHITE_ROOK, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*2+20, null);
          g.drawImage(WHITE_QUEEN, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*3+20, null);
          
          
-         g.setFont(GAME_OVER_FONT);
+        g.setFont(GAME_OVER_FONT);
         if (isGameOver)
         {
             if (playerOneWon)
@@ -587,6 +588,7 @@ public class Board {
         }
     }
     
+    //Render possible moves for a given piece. Note that moves that would be illegal due to pinning, check etc are still rendered.
     private void renderPossibleMoves(Graphics g, Point piece)
     {
         LinkedList<Move> possibleMoves = new LinkedList<>();
@@ -622,6 +624,7 @@ public class Board {
         }
     }
     
+    //Renders a piecec given a char representation
     private void renderPiece(Graphics g, char pieceCode, int x, int y)
     {
         if (FLIP_COLORS)
@@ -640,6 +643,7 @@ public class Board {
         }
     }
     
+    //Loads an image from disk
     private static BufferedImage loadImage(InputStream stream)
     {
         try {
@@ -655,6 +659,7 @@ public class Board {
         return cloneBoard(BOARD);
     }
     
+    //Performs a deep copy of a board
     public static char[][] cloneBoard(char[][] board)
     {
         char[][] newBoard = new char[9][8];
@@ -667,6 +672,7 @@ public class Board {
         return newBoard;
     }
     
+    //Sets square as selected by player
     public static void setSelected(Point selected)
     {
         if (onBoard(selected))
@@ -682,6 +688,7 @@ public class Board {
         }
     }
     
+    //Verifies if a given move is legal
     public static boolean isLegalMove(Move move, boolean isWhite)
     {
         LinkedList<Move> moves = getLegalMoves(BOARD, isWhite, false);
@@ -690,21 +697,20 @@ public class Board {
         {
             if (m.equals(move))
             {
-                //System.out.println("Legal");
                 return true;
             }
         }
-        //System.out.println("Illegal");
         return false;
     }
     
+    //Unmakes a move. This is used for optimization reasons because it is more efficient to make and unmake a move than to perform a duplication of the chessboard and then only make a move.
     public static long unmakeMove(char[][] position, Move move, long zobrist)
     {
-        char endPosPiece = position[move.getEndSquare().y][move.getEndSquare().x];
-        position[move.getStartSquare().y][move.getStartSquare().x] = endPosPiece;
-        position[move.getEndSquare().y][move.getEndSquare().x] = move.getCapturedPiece();
+        char endPosPiece = position[move.getEndSquare().y][move.getEndSquare().x]; //Piece that was moved
+        position[move.getStartSquare().y][move.getStartSquare().x] = endPosPiece; //Unmove the piece
+        position[move.getEndSquare().y][move.getEndSquare().x] = move.getCapturedPiece(); //Replace the captured piece, if applicable.
         
-        if (move.isFirstKingMove())
+        if (move.isFirstKingMove()) //If it was the first time a king was moved, restore castling rights
         {
             if (endPosPiece == 'k')
             {
@@ -722,7 +728,7 @@ public class Board {
             }
         }
         
-        if (move.isFirstRookMove())
+        if (move.isFirstRookMove()) //Also restore castling rights for first rook moves
         {
             if (endPosPiece == 'r')
             {
@@ -761,6 +767,7 @@ public class Board {
             }
         }
         
+        //If the move was a castle, we must also move the rook back
         int castle = move.getCastleVal();
         
         if (castle != 0)
@@ -779,6 +786,7 @@ public class Board {
             }
         }
         
+        //If the move was a promotion, undo that
         if (move.isPromotion())
         {
             if (move.getEndSquare().y == 0)
@@ -791,6 +799,7 @@ public class Board {
             }
         }
         
+        //Handle en passant
         if (move.isEnPassant())
         {            
             if (move.getEndSquare().y == 2)
@@ -813,9 +822,10 @@ public class Board {
         return zobrist;
     }
     
+    //Makes a move. Unmade by unmakeMove()
     public static long makeMove(char[][] position, Move move, boolean actual, long zobrist)
     {
-        char startPiece = position[move.getStartSquare().y][move.getStartSquare().x];
+        char startPiece = position[move.getStartSquare().y][move.getStartSquare().x]; //Piece that will be moved
         
         move.setEnPassantVal(position[8][0]);
        
