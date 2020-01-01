@@ -322,7 +322,6 @@ public class Move implements Comparable<Move> {
     
     public char getPromotingTo()
     {
-        System.out.println(promotingTo);
         return promotingTo;
     }
     

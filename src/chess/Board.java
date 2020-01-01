@@ -1012,9 +1012,9 @@ public class Board {
         }
         
         
-        if (actual)
+        if (actual) //If the move is actually being made on the real game board as opposed to moves made by the AI in the minmax algorithm
         {
-            //TEMP
+            //Used for checking for 3-fold repetition
             reachedPositions[reachedPositionsIndex] = calculateZobrist(position);
             reachedPositionsIndex++;
             if (reachedPositionsIndex >= reachedPositions.length)
@@ -1123,11 +1123,12 @@ public class Board {
         return result;
     }
     
+    //Finds all possible pawn moves for a given square and color
     public static void findPawnMoves(char[][] position, boolean isWhite, int x, int y, LinkedList legalMoves)
     {
-        if (isWhite && Character.isUpperCase(position[y][x]))
+        if (isWhite && Character.isUpperCase(position[y][x])) //if it's white's move and the piece is black, return
             return;
-        if (!isWhite && Character.isLowerCase(position[y][x]))
+        if (!isWhite && Character.isLowerCase(position[y][x])) //And vice versa
             return;
         
         if (isWhite)
@@ -1136,9 +1137,6 @@ public class Board {
             {
                 if (x-1 == Character.getNumericValue(position[8][0]) || x+1 == Character.getNumericValue(position[8][0]))
                 {
-                    if (position[3][Character.getNumericValue(position[8][0])] == ' ')
-                        System.out.println("False passant " + position[8][0]);
-
                     addMove(new Move(new Point(x, y), new Point(Character.getNumericValue(position[8][0]), y-1)), legalMoves, position);
                 }
             }
@@ -1651,6 +1649,7 @@ public class Board {
         }
     }
     
+    //Determines if a given square can be attacked by a given color
     public static boolean isAttacked(char[][] position, boolean whiteAttacker, int x, int y)
     {
         boolean isAttacked = false;
@@ -1943,6 +1942,7 @@ public class Board {
         return isAttacked;
     }
    
+    //Add a move to a list of moves and, if applicable, duplicate and add moves for different prompotion options
     private static void addMove(Move move, LinkedList moveList, char[][] position)
     {
         if (position[move.getEndSquare().y][move.getEndSquare().x] != ' ')
@@ -2100,6 +2100,7 @@ public class Board {
         return false;
     }
     
+    //Finds all capture moves from a list of moves
     public static LinkedList<Move> getCaptures(char[][] position, boolean isWhite)
     {
         LinkedList<Move> captures = getLegalMoves(position, isWhite, false);
@@ -2119,28 +2120,22 @@ public class Board {
             }
         }
         
-        //Collections.sort(captures);
-
-        
-        /*
-        Arrays.sort(captures, (m1, m2) -> {
-            int c = 0;
-            
-            return c;
-        });*/
                 
         return captures;
     }
     
+    
+    //Gets all legal moves from a position.
     public static LinkedList<Move> getLegalMoves(char[][] position, boolean isWhite, boolean sort)
     {
-        LinkedList legalMoves = new LinkedList<Move>();
+        LinkedList<Move> legalMoves = new LinkedList<>();
         
+        //Iterate through board
         for (int y = 0; y < 8; y++)
         {
             for (int x = 0; x < 8; x++)
             {
-                switch (Character.toLowerCase(position[y][x]))
+                switch (Character.toLowerCase(position[y][x])) //Find moves pertaining to the type of piece
                 {
                     case ' ':
                         break;
@@ -2157,7 +2152,7 @@ public class Board {
                         findRookMoves(position, isWhite, x, y, legalMoves);
                         break;
                     case 'q':
-                        findBishopMoves(position, isWhite, x, y, legalMoves);
+                        findBishopMoves(position, isWhite, x, y, legalMoves); //Queen's moves consist of bishop's moves + rook's moves
                         findRookMoves(position, isWhite, x, y, legalMoves);
                         break;
                     case 'k':
@@ -2167,8 +2162,11 @@ public class Board {
             }
         }
         
-        LinkedList<Move> newMoves = new LinkedList<>();
+        
+        LinkedList<Move> newMoves = new LinkedList<>(); //Intended to be used for sorting moves by probable value, not currently implemented
                
+        
+        //We must now remove all moves which are illegal because of circumstances not detected in the simple move finding methods
         Iterator iter = legalMoves.iterator();
 
         
@@ -2190,7 +2188,8 @@ public class Board {
                 move.setCapturedPiece(position[move.getEndSquare().y][move.getEndSquare().x]);
             
             makeMove(position, move, false, 0);
-        
+            
+            //Find king position            
             outerloop:
             for (int i = 0; i < 8; i++)
             {
@@ -2204,15 +2203,13 @@ public class Board {
                 }
             }
             
-            //if (kingPosition == null)
-            //    System.out.println(Arrays.deepToString(position));
             
-
+            //If the king is attacked, the move cannot be legal
             if (isAttacked(position, !isWhite, kingPosition.x, kingPosition.y))
             {
                 iter.remove();
             }
-            else if (sort)
+            else if (sort) //Not currently used
             {
                 if (move.getCapturedPiece() != ' ')
                 {
@@ -2251,11 +2248,13 @@ public class Board {
         return selected;
     }
     
+    //Checks if a given set of coordinates is on top of the rendered board
     private static boolean onBoard(Point coords)
     {
         return coords.x > POSITION[0] && coords.y > POSITION[1] && coords.x < POSITION[0]+SQUARE_SIZE*8 && coords.y < POSITION[1]+SQUARE_SIZE*8;
     }
     
+    //Converts a mouse position to a set of coordinates of the board.
     public static Point toBoardCoords(Point coords)
     {
         if (coords.x > POSITION[0] && coords.y > POSITION[1] && coords.x < POSITION[0]+SQUARE_SIZE*8 && coords.y < POSITION[1]+SQUARE_SIZE*8)
