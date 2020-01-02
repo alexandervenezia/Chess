@@ -1,8 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Author: Alexander Venezia
+ * 
+ * Basic chess game with a computer opponent
+ * The opponent's AI is based on the minmax algorithm.
  */
+
 package chess;
 
 import java.awt.Color;
@@ -45,10 +47,7 @@ public class Display extends JPanel {
         board.render(g);
     }
     
-    private void renderUI(Graphics g)
-    {
-       
-    }
+    private void renderUI(Graphics g) {}
         
     @Override
     public void paintComponent(Graphics g)

@@ -1,53 +1,55 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Author: Alexander Venezia
+ * 
+ * Basic chess game with a computer opponent
+ * The opponent's AI is based on the minmax algorithm.
  */
+
 package chess;
 
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Alexander
- */
+
 public class ComputerPlayer implements Player, Runnable {
-    private boolean isBook;
-    private double isOpening;
-    private double isMiddlegame;
-    private double isEndgame;    
+    private boolean isBook; //Not currently used.
+    private double isOpening; //Degree to which computer thinks the game is in the opening stage
+    private double isMiddlegame; //Same for middlegame
+    private double isEndgame; //Same for endgame
     
-    private boolean isThinking;
-    private Move move;
-    private static int movesAnalyzed;
-    private boolean isWhite;
-    private final Thread thread;
+    private boolean isThinking; //Whether the computer is currently determining its next move
+    private Move move; //Move the computer has decided upon
+    private static int movesAnalyzed; //Metric for number of moves analyzed on the last move
+    private boolean isWhite; //Whether the computer is white
+    private final Thread thread; //Main thread the AI runs on
     
-    private static final int PROCESSING_THREADS = 0;
-    private int thinkTime = 4000;
-    private int maxThinkTime = 10000;//THINK_TIME*3;
-    private int minThinkTime;
-    private static final int EXPECTED_TIME_MULT = 30;
-    private static final int EXPECTED_TIME_MULT_ENDGAME = 25;
+    //Number of additional threads to use for calculation. At zero, only the main thread is used for calculation. On some computers, performance may be improved by increasing this.
+    //The advantage of increasing the number of threads is improved utilization of multicored CPUs. The disadvantage is that, by splitting up and desynchronizing the processing load, the algorithm's alpha-beta pruning is rendered less effective.
+    private static final int PROCESSING_THREADS = 0; 
     
     private Thread[] processingThreads;
     private LinkedList<Move>[] processingThreadMoves;
     private Move[] processingThreadChoice;
     private boolean[] processingThreadsComplete;
     
-    //private static Move[] principalVariation;
-    private static LinkedList<Move> principalVariation;
+    private int thinkTime; //Amount of time the computer will try to think about its next move. Actual think time will vary.
+    private int maxThinkTime; //The absolute maximum amount of time the computer will spend on its next move. If exceeded, the next iteration of the move search will be aborted immediately and the best move determined so far will be returned.
+    private int minThinkTime; //The absolute minimum amount of time the computer will spend on its next move. If the move search is complete before this number is exceeded, the computer will begin another iteration.
+    private static final int EXPECTED_TIME_MULT = 30; //How much the computer expects each deeper iteration to take compared to the previous one.
+    private static final int EXPECTED_TIME_MULT_ENDGAME = 25; //In the endgame, the multiplier is expected to be lower due to fewer possible branches per move.
     
-    private static int totalMovesAnalyzed;
-    private static double totalTime;
+    //private static Move[] principalVariation;
+    private static LinkedList<Move> principalVariation; //Not currently used. If implemented, this would allow the AI to return its expected variation for its chosen move.
+    
+    private static int totalMovesAnalyzed; //Metric for number of moves analzyed across all moves
+    private static double totalTime; //Time spent on all moves
     
     private int moves;
     
-    private static int leaves;
+    private static int leaves; //Metric for number of leaves reached
     
-    private boolean abortSearch;
+    private boolean abortSearch; //Whether or not the search is to be immediately aborted
     
     private int threadCount = 0;
     
@@ -55,10 +57,11 @@ public class ComputerPlayer implements Player, Runnable {
     
     public static Move lastAnalyzed;
     
-    private static final int[] WINDOW_SIZES = new int[]{20, 20, 20, 15, 15, 15, 15};
+    //private static final int[] WINDOW_SIZES = new int[]{20, 20, 20, 15, 15, 15, 15}; // Not currently used
     
     private Timer clock;
     
+    //Some pieces become more valuable the closer they are to the center of the board
     private static final double[][] CENTRALIZATION = new double[][]
     {
         {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
@@ -72,15 +75,16 @@ public class ComputerPlayer implements Player, Runnable {
         
     };
     
+    //Bishops have more specific squares where they are more valuable
     private static final double[][] BISHOP_POSITION_VALUES = new double[][]
     {
         {0.10, 0.10, 0.00, 0.10, 0.10, 0.00, 0.10, 0.10},
-        {0.20, 1.20, 0.10, 0.30, 0.30, 0.10, 1.20, 0.20},
+        {0.20, 1.25, 0.10, 0.30, 0.30, 0.10, 1.25, 0.20},
         {0.80, 0.80, 0.10, 0.35, 0.35, 0.10, 0.80, 0.80},
         {0.15, 0.30, 0.75, 0.20, 0.20, 0.75, 0.30, 0.15},
         {0.15, 0.30, 0.75, 0.20, 0.20, 0.75, 0.30, 0.15},
         {0.80, 0.80, 0.10, 0.35, 0.35, 0.10, 0.80, 0.80},
-        {0.20, 1.20, 0.10, 0.30, 0.30, 0.10, 1.20, 0.20},
+        {0.20, 1.25, 0.10, 0.30, 0.30, 0.10, 1.25, 0.20},
         {0.10, 0.10, 0.00, 0.10, 0.10, 0.00, 0.10, 0.10},
     };
     
@@ -116,6 +120,7 @@ public class ComputerPlayer implements Player, Runnable {
                 
     }
     
+    //Linear interpolation
     private double lerp(double value1, double value2, double factor)
     {
         return (1-factor) * value1 + factor * value2;
@@ -127,12 +132,11 @@ public class ComputerPlayer implements Player, Runnable {
         int thisThread = threadCount;
         threadCount++;
         
-        if (threadCount == 1)
+        if (threadCount == 1) //If we're on the main thread
         {
-            //System.out.println("T");
             while (true)
             {
-                if (isThinking && move == null)
+                if (isThinking && move == null) //If it's time for us to find a move, start looking
                 {
                     char[][] position = Board.getBoardPosition();
                     long zobrist = Board.getZobrist();
@@ -141,7 +145,7 @@ public class ComputerPlayer implements Player, Runnable {
 
                     move = determineMove(position, possibleMoves, zobrist);
                 }
-                else
+                else //Otherwise, sleep briefly to avoid overutilizing computer resoruces
                 {
                     try {
                         Thread.sleep(50);
@@ -193,12 +197,14 @@ public class ComputerPlayer implements Player, Runnable {
         }
     }
     
+    //Reorder move list to place current best move at the start
     private void reorderMoves(LinkedList<Move> legalMoves, Move bestMove)
     {
         legalMoves.remove(bestMove);
         legalMoves.add(0, bestMove);
     }
     
+    //Determiens how long the computer will think on the next move, along with minimum and maximum time.
     private void determineThinkTime()
     {
         double timeLeft;
@@ -215,11 +221,12 @@ public class ComputerPlayer implements Player, Runnable {
             timeLeft = clock.getBlackTime()*1000;
         }
         
-        int delay = clock.getDelay()*1000;
-        int increment = clock.getIncrement()*1000;                
+        int delay = clock.getDelay()*1000; //Find clock delay in milliseconds
+        int increment = clock.getIncrement()*1000; //Find clock increment in milliseconds               
         
-        thinkTime = (int)timeLeft/Math.max((30-moves), 5);
+        thinkTime = (int)timeLeft/Math.max((30-moves), 5); //Calculate base think time
         
+        //Determine multiplier for maximum time based on time remaining
         if (timeLeft < 60*1000)
             maxMult = 1.5; 
         else if (timeLeft < 180*1000)
@@ -229,13 +236,15 @@ public class ComputerPlayer implements Player, Runnable {
         else
             maxMult = 3;
         
-        maxThinkTime = (int)(thinkTime*maxMult);
+        maxThinkTime = (int)(thinkTime*maxMult); //Determine maximum think time
         
+        //If time is low, set max think time to be the same as think time
         if (timeLeft < 10*1000 && increment == 0 && delay == 0)
         {
             thinkTime = 500;
             maxThinkTime = 500;
             
+            //If time is extremely low, lower think time and max think time
             if (timeLeft < 4*1000)
             {
                 thinkTime = 200;
@@ -243,6 +252,7 @@ public class ComputerPlayer implements Player, Runnable {
             }
         }
         
+        //If increment exists, think for longer
         if (increment > 0)
         {
             if (timeLeft > 180*1000)
@@ -285,7 +295,6 @@ public class ComputerPlayer implements Player, Runnable {
         {
             if (timeLeft < 10*1000)
             {
-                System.out.println("Low time");
                 if (maxThinkTime > increment)
                 {
                     thinkTime = increment;
@@ -297,18 +306,19 @@ public class ComputerPlayer implements Player, Runnable {
         System.out.println("Target time: " + thinkTime/1000 + "; Minimum time: " + minThinkTime/1000 + "; Maximum time: " + maxThinkTime/1000 + "\n\n");
     }
     
+    //Find next move
     private Move determineMove(char[][] position, LinkedList<Move> legalMoves, long zobrist)
     {
-        if (legalMoves.size() == 1)
+        if (legalMoves.size() == 1) //If there is only one legal move, return that
             return legalMoves.get(0);
         
         determineThinkTime();
         
-        long startTime = System.nanoTime();
+        long startTime = System.nanoTime(); //Time when we start looking for the move
         searchStartTime = startTime;
         int moveCount = 0;
         int remainder = 0;
-        LinkedList<Move> mainMoves = new LinkedList<>();
+        LinkedList<Move> mainMoves = new LinkedList<>(); //Moves to be analyzed by the main thread. If there is only one processing thread, this will include all legal moves.
         
         for (int i = 0; i < legalMoves.size()/(processingThreads.length+1); i++)
         {
@@ -316,6 +326,7 @@ public class ComputerPlayer implements Player, Runnable {
             moveCount++;
         }
         
+        //Fill processing threads with their assigned moves, if they are enabled
         for (int i = 0; i < processingThreads.length; i++)
         {
             for (int j = 0; j < legalMoves.size()/(processingThreads.length+1); j++)
@@ -325,6 +336,7 @@ public class ComputerPlayer implements Player, Runnable {
             }
         }
         
+        //Add any remaining moves to the main thread
         remainder = legalMoves.size()-moveCount;
         
         for (int i = 0; i < remainder; i++)
@@ -333,6 +345,7 @@ public class ComputerPlayer implements Player, Runnable {
             moveCount++;
         }
         
+        //If the processing threads have work to do, turn them on
         for (int i = 0; i < processingThreads.length; i++)
         {
             if (processingThreadMoves[i].size() == 0)
@@ -341,23 +354,26 @@ public class ComputerPlayer implements Player, Runnable {
             }
         }
         
+        //Reset metrics
         leaves = 0;
         movesAnalyzed = 0;
+        
         Move choice = null;
         Move newChoice = null;
         
         
         double timeTaken = 0;
         
-        int currentDepth = -1;
+        int currentDepth = -1; //How many iterations of the iterative deepening search we have executed
         
+        //Used for alpha beta pruning. These values are arbitrary; it is only important that they be outside of the possible spectrum of move evaluations.
         int alpha = -10000000;
         int beta = 10000000;
         
+        //Determine estimated game state based on current position
         isOpening = isOpening(position);
         isEndgame = isEndgame(position);
         
-        System.out.println(lerp(EXPECTED_TIME_MULT, EXPECTED_TIME_MULT_ENDGAME, isEndgame*0.01));
         while ((timeTaken*lerp(EXPECTED_TIME_MULT, EXPECTED_TIME_MULT_ENDGAME, isEndgame*0.01) < thinkTime || timeTaken < minThinkTime) && !abortSearch)
         {/*
             if (choice != null)

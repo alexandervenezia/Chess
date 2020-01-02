@@ -1,7 +1,17 @@
 /**
+ * Author: Alexander Venezia
+ * 
  * Basic chess game with a computer opponent
  * The opponent's AI is based on the minmax algorithm.
+ * 
+ * 
+ * Possible future additions:
+ *  -   Display principal variation
+ *  -   Transposition table for improved AI
+ *  -   Ability to modify time control in application
+ *  -   Ability to pit AI versus AI in application
  */
+
 package chess;
 
 import java.util.logging.Level;

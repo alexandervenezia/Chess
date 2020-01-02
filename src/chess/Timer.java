@@ -1,17 +1,16 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Author: Alexander Venezia
+ * 
+ * Basic chess game with a computer opponent
+ * The opponent's AI is based on the minmax algorithm.
  */
+
 package chess;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Alexander
- */
+
 public class Timer implements Runnable {
     private double whiteTime;
     private double blackTime;

@@ -1,8 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Author: Alexander Venezia
+ * 
+ * Basic chess game with a computer opponent
+ * The opponent's AI is based on the minmax algorithm.
  */
+
 package chess;
 
 import java.awt.Color;
@@ -22,10 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
-/**
- *
- * @author Alexander
- */
+
 public class Board {
     private static final int SQUARE_SIZE = 110; //Size in pixels of each square of the board. This value can be changed freely, although there maybe problems if it is too large or too small.
     

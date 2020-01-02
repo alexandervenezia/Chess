@@ -1,18 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Author: Alexander Venezia
+ * 
+ * Basic chess game with a computer opponent
+ * The opponent's AI is based on the minmax algorithm.
  */
+
 package chess;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-/**
- *
- * @author Alexander
- */
+
 class HumanPlayer implements Player, MouseListener{
     private Move move;
     private Move premove;
