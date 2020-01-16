@@ -7,13 +7,14 @@
 
 package chess;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
 public class ComputerPlayer implements Player, Runnable {
-    private boolean isBook; //Not currently used.
+    private boolean isBook; //Not currently used, but 
     private double isOpening; //Degree to which computer thinks the game is in the opening stage
     private double isMiddlegame; //Same for middlegame
     private double isEndgame; //Same for endgame
@@ -182,7 +183,7 @@ public class ComputerPlayer implements Player, Runnable {
                     {
                         currentDepth++;
 
-                        choice = minmax(position, 0, currentDepth, isWhite, alpha, beta, processingThreadMoves[thisThread-1], true, zobrist);
+                        choice = minmax(position, 0, currentDepth, isWhite, alpha, beta, processingThreadMoves[thisThread-1], zobrist);
                         
                         if (!choice.isAbortion())
                             processingThreadChoice[thisThread-1] = choice;
@@ -388,7 +389,7 @@ public class ComputerPlayer implements Player, Runnable {
             
             currentDepth+=2;
                         
-            newChoice = minmax(position, 0, currentDepth, isWhite, alpha, beta, mainMoves, true, zobrist);
+            newChoice = minmax(position, 0, currentDepth, isWhite, alpha, beta, mainMoves, zobrist);
             
             
             if (!newChoice.isAbortion())
@@ -499,6 +500,7 @@ public class ComputerPlayer implements Player, Runnable {
         return choice;
     }
     
+    //Counts the raw material of a given position (9 for queen, 5 for rook, 3 for knight and bishop, 1 for pawn)
     private static int totalMaterial(char[][] position)
     {
         int material = 0;
@@ -531,6 +533,7 @@ public class ComputerPlayer implements Player, Runnable {
         return material;
     }
     
+    //Calculates how much raw material is on its starting square, used to estimate what stage the game is in
     private static int materialOnStartingSquares(char[][] position)
     {
         int material = 0;
@@ -596,6 +599,7 @@ public class ComputerPlayer implements Player, Runnable {
         return (endgameValue/78)*100;
     }
     
+    //Performs a rough evaluation of a given position (a leaf of the search tree)
     private double evaluateLeaf(char[][] position)
     {        
         int availableMoves;
@@ -610,9 +614,9 @@ public class ComputerPlayer implements Player, Runnable {
                 switch (position[i][j])
                 {
                     case 'p':
-                        value += 17;
-                        value += CENTRALIZATION[i][j]*4;
-                        value -= i*1;
+                        value += 17; //Base value of piece
+                        value += CENTRALIZATION[i][j]*4; //Pawns are more valuable if centralized
+                        value -= i*1; //More advanced pawns are more valuable
                         break;
                     case 'P':
                         value -= 17;
@@ -624,6 +628,7 @@ public class ComputerPlayer implements Player, Runnable {
                         value += 35;
                         value += (CENTRALIZATION[i][j]-0.5)*5;
                         
+                        //Knights on the fifth and sixth rank are particularly valuable
                         if (i == 4)
                             value += 5;
                         if (i == 5 || i == 6)
@@ -799,23 +804,36 @@ public class ComputerPlayer implements Player, Runnable {
         return value;
     }
     
-    private Move minmax(char[][] position, int depth, int maxDepth, boolean isWhite, double alpha, double beta, LinkedList<Move> legalMoves, boolean allowNull, long zobrist)
+    /**
+     * 
+     * @param position Game state
+     * @param depth How far we have searched already
+     * @param maxDepth How deeply to search
+     * @param isWhite Whether or not white has the move
+     * @param alpha Minimum score the maximizing player is assured of
+     * @param beta Maximum score the minimizing player is assured of
+     * @param legalMoves List of all legal moves in a given position. If null, the list of legal moves will be determined
+     * @param zobrist Zobrist hash of the current position
+     * @return The move determined
+     */
+    private Move minmax(char[][] position, int depth, int maxDepth, boolean isWhite, double alpha, double beta, LinkedList<Move> legalMoves, long zobrist)
     {
         movesAnalyzed++;
         
+        //If we're out of time, abort search
         if (!abortSearch && (System.nanoTime()-searchStartTime)/1000000 > maxThinkTime)
         {
             abortSearch = true;
             System.out.println("Aborted " + (System.nanoTime()-searchStartTime)/1000000);
         }
         
-        boolean nullMove;
         Move move = null;
-        double moveValue;
+        
+        //Initiate best value to an unreachably terrible score
         double bestValue = 1000;
         if (isWhite)
             bestValue = -1000;
-                
+        
         if (legalMoves == null)
         {
             if (depth <= 3)
@@ -825,8 +843,8 @@ public class ComputerPlayer implements Player, Runnable {
         }
 
         
-        LinkedList<Move> captureMoves = new LinkedList<Move>();
-        long[] previousPositions;
+        //LinkedList<Move> captureMoves = new LinkedList<Move>();
+        HashSet<Long> previousPositions;
         
         //captureMoves = Board.getLegalMoves(position, isWhite);
         
@@ -834,94 +852,63 @@ public class ComputerPlayer implements Player, Runnable {
         for (Move candidateMove : legalMoves)
         {
             //candidatePosition = Board.cloneBoard(position);
-            nullMove = false;
 
-            if (!nullMove)
+
+            boolean cutoff = true;
+            boolean isRepeat = false;
+            zobrist = Board.makeMove(position, candidateMove, false, 0); //Ideally, makeMove would return the correct zobrist value, however in the current implementation, it returns only a placeholder.
+
+            zobrist = Board.calculateZobrist(position);
+            previousPositions = Board.getPreviousPositions();
+            
+            /*
+            for (int i = 0; i < previousPositions.length; i++)
             {
-                boolean cutoff = true;
-                boolean isRepeat = false;
-                zobrist = Board.makeMove(position, candidateMove, false, 0);
-                
-                zobrist = Board.calculateZobrist(position);
-                previousPositions = Board.getPreviousPositions();
-                
-                for (int i = 0; i < previousPositions.length; i++)
+                if (zobrist == previousPositions[i])
                 {
-                    if (zobrist == previousPositions[i])
-                    {
-                        candidateMove.setValue(0);
-                        isRepeat = true;
-                    }
+                    candidateMove.setValue(0);
+                    isRepeat = true;
                 }
-                
-                if (!isRepeat)
-                {
-                    lastAnalyzed = candidateMove;
-                    if (abortSearch)
-                    {
-                        candidateMove.setValue(0);
-                        candidateMove.setAbortion();
-                        Board.unmakeMove(position, candidateMove, 0);
-                        return candidateMove;
-                    }
-                    
-                    if (depth >= maxDepth)
-                    {
-                        if (false && isWhite == this.isWhite)
-                        {
-                            //captureMoves = Board.getCaptures(position, !isWhite);
-                            //System.out.println(captureMoves.size());
-                            //System.out.println(depth);
-                            candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, false, zobrist).getValue());
-                        }
-                        else
-                            candidateMove.setValue(evaluateLeaf(position));
-                    }
-                    /*CAUSES HANGING PIECES AFTER e4 e6 d4 Nc6 d5, MAYBE FIX?
-                    else if (allowNull && depth < maxDepth-30 && !Board.isInCheck(position) && isEndgame < 65)
-                    {
-                        //System.out.println(maxDepth);
-                        char enPassant = position[8][0];
-                        cutoff = false;
-                        double eval;
-                        position[8][0] = ' ';
-
-                        if (isWhite)
-                        {
-
-                            eval = minmax(position, depth, maxDepth-3, !isWhite, beta, beta+1, null, false, zobrist).getValue();
-
-                            cutoff = eval >= beta;
-                        }
-                        else
-                        {
-                            eval = minmax(position, depth, maxDepth-3, !isWhite, alpha-1, alpha, null, false, zobrist).getValue();
-
-                            cutoff = eval <= alpha;
-                        }
-                        if (cutoff)
-                        {
-                            //System.out.println(depth);
-                            candidateMove.setValue(eval);
-                            move = candidateMove;
-                            nullMove = true;
-                            //System.out.println(depth);
-                            //break;
-                            //position[8][0] = enPassant;
-                            //return candidateMove;
-                        }
-
-                        position[8][0] = enPassant;
-                    }*/
-
-                    else
-                        candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, true, zobrist).getValue());
-
-                    if (!cutoff)
-                        candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, true, zobrist).getValue());
-                }
-                zobrist = Board.unmakeMove(position, candidateMove, 0);
+            }*/
+            
+            if (previousPositions.contains(zobrist))
+            {
+                candidateMove.setValue(0);
+                isRepeat = true;
             }
+
+            if (!isRepeat)
+            {
+                lastAnalyzed = candidateMove;
+                if (abortSearch)
+                {
+                    candidateMove.setValue(0);
+                    candidateMove.setAbortion();
+                    Board.unmakeMove(position, candidateMove, 0);
+                    return candidateMove;
+                }
+
+                if (depth >= maxDepth)
+                {
+                    if (false && isWhite == this.isWhite)
+                    {
+                        //captureMoves = Board.getCaptures(position, !isWhite);
+                        //System.out.println(captureMoves.size());
+                        //System.out.println(depth);
+                        candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, zobrist).getValue());
+                    }
+                    else
+                        candidateMove.setValue(evaluateLeaf(position));
+                }                    
+
+                else
+                    candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, zobrist).getValue());
+
+                if (!cutoff)
+                    candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, zobrist).getValue());
+            }
+            zobrist = Board.unmakeMove(position, candidateMove, 0);
+            
             
             if (isWhite) 
             {

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
@@ -32,7 +33,6 @@ public class Board {
     private static final int WHITE_TIME_SECONDS = 3; //White's time in seconds, should be 0-60
     private static final int WHITE_TIME_MINUTES = 5; //White's time in minutes
     
-    //Same as for white
     private static final int BLACK_TIME_SECONDS =  3;
     private static final int BLACK_TIME_MINUTES = 5;
     
@@ -42,7 +42,7 @@ public class Board {
     private static final int INCREMENT = 0; //Seconds added to a player's clock every time they make a move
     private static final int DELAY = 0; //Seconds before a player begins to lose time
     
-    private static Timer clock; //Used for timing
+    private static Timer clock; //Chess clock to enforce maximum time per move
     
     private static final Font CLOCK_FONT = new java.awt.Font("Courier New", java.awt.Font.BOLD, 40);
     private static final Font GAME_OVER_FONT = new java.awt.Font("Courier New", java.awt.Font.BOLD, 100);
@@ -96,7 +96,8 @@ public class Board {
     private static char nextPromotion = 'q'; //What the next pawn that reaches the 8th rank will promote to
     
     private static int reachedPositionsIndex = 0; //Where in reachedPositions to store next game position
-    private static final long[] reachedPositions = new long[30]; //Stores zobrist hashes of previous positions to detect 3-fold repetition. The value of 30 is abritrary, however it is exceedingly unlikely to reach 3-fold repetition over a span that large and would likely be missed in an OTB game anyway.
+    //private static final long[] reachedPositions = new long[30]; //Stores zobrist hashes of previous positions to detect 3-fold repetition. The value of 30 is abritrary, however it is exceedingly unlikely to reach 3-fold repetition over a span that large and would likely be missed in an OTB game anyway.
+    private static final HashSet<Long> reachedPositions = new HashSet<>();
     
     private static final int[] POSITION = {120, 25}; //Position of main game board
     private static final int[] BLACK_CLOCK_POSITION = {1020, 430}; //Position of black's clock
@@ -1014,12 +1015,16 @@ public class Board {
         if (actual) //If the move is actually being made on the real game board as opposed to moves made by the AI in the minmax algorithm
         {
             //Used for checking for 3-fold repetition
+            
+            /*
             reachedPositions[reachedPositionsIndex] = calculateZobrist(position);
             reachedPositionsIndex++;
             if (reachedPositionsIndex >= reachedPositions.length)
             {
                 reachedPositionsIndex = 0;
             }
+            */
+            reachedPositions.add(zobrist);
             
             movedFrom = move.getStartSquare();
             movedTo = move.getEndSquare();
@@ -1072,6 +1077,7 @@ public class Board {
         nextPromotion = toPromote;
     }
     
+    //Returns true if the given position is of a completed game, false otherwise
     public static boolean checkGameOver(char[][] position, boolean isWhite)
     {
         boolean gameOver = false;
@@ -1089,7 +1095,7 @@ public class Board {
         return currentZobrist;
     }
     
-    public static long[] getPreviousPositions()
+    public static HashSet<Long> getPreviousPositions()
     {
         return reachedPositions;
     }

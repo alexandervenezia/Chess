@@ -10,6 +10,7 @@
  *  -   Transposition table for improved AI
  *  -   Ability to modify time control in application
  *  -   Ability to pit AI versus AI in application
+ *  -   Opening book
  */
 
 package chess;

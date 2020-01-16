@@ -107,6 +107,7 @@ public class Timer implements Runnable {
         return delay;
     }
     
+    //Stops current player's clock and starts their opponent's
     public void flip()
     {
         if (whiteClockRunning)
