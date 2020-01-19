@@ -31,15 +31,15 @@ public class Board {
     
     //Time for each player in minutes/seconds for convenience
     private static final int WHITE_TIME_SECONDS = 3; //White's time in seconds, should be 0-60
-    private static final int WHITE_TIME_MINUTES = 5; //White's time in minutes
+    private static final int WHITE_TIME_MINUTES = 1; //White's time in minutes
     
     private static final int BLACK_TIME_SECONDS =  3;
-    private static final int BLACK_TIME_MINUTES = 5;
+    private static final int BLACK_TIME_MINUTES = 1;
     
     //Calculate white and black's time in milliseconds
     private static final int WHITE_START_TIME = (WHITE_TIME_MINUTES*60 + WHITE_TIME_SECONDS)*1000;
     private static final int BLACK_START_TIME = (BLACK_TIME_MINUTES*60 + BLACK_TIME_SECONDS)*1000;
-    private static final int INCREMENT = 0; //Seconds added to a player's clock every time they make a move
+    private static final int INCREMENT = 2; //Seconds added to a player's clock every time they make a move
     private static final int DELAY = 0; //Seconds before a player begins to lose time
     
     private static Timer clock; //Chess clock to enforce maximum time per move
@@ -111,6 +111,8 @@ public class Board {
     private boolean allowPremoves = true; //Allows the human player to choose a move while the computer is deliberating, which will be played immediately after the computer's move, if it is legal
     private boolean blindfold = false; //If set to true, no pieces are rendered to challenge the human's memory.
     
+    
+    
     private static final char[][] BOARD = 
     {
         {'R', 'N' , 'B', 'Q', 'K', 'B', 'N', 'R'},
@@ -126,7 +128,22 @@ public class Board {
             //The fifth and sixth are for whether the rooks have moved, queenside and kingside respectively. These work the same as the king. The seventh and eighth entries are placeholders
             //and currently have no meaning.
     };
-
+    /*
+    private static final char[][] BOARD = 
+    {
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', 'P', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'P', ' ', ' ', ' ', 'K', 'P', ' ', ' '},
+        {' ', ' ', ' ', ' ', 'P', ' ', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', ' ', 'p', ' ', ' ', ' ', ' '},
+        {' ', 'p', ' ', ' ', 'k', ' ', 'p', 'p'},
+        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {' ', '0', '0', '3', '3', '3', ' ', ' '} //Last line represents meta information. The first entry is for en-passant captures. Blank for no capture, number 0-7 to represent file of possible en-passant capture. Up to two pawns can execute an en-passant capture, but only one pawn may be thus captured.
+            //The second entry is for the number of repeated moves. The third entry is for the number of moves since capture or pawn move. The fourth entry is for whether or not the king has moved, 0 for neither king having moved, 1 for the white king only, 2 for the black king only, 3 for both kings
+            //The fifth and sixth are for whether the rooks have moved, queenside and kingside respectively. These work the same as the king. The seventh and eighth entries are placeholders
+            //and currently have no meaning.
+    };*/
     
     public static final char[][] STARTING_POSITION = cloneBoard(BOARD);
     

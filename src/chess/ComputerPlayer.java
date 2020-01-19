@@ -7,6 +7,7 @@
 
 package chess;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.logging.Level;
@@ -14,6 +15,21 @@ import java.util.logging.Logger;
 
 
 public class ComputerPlayer implements Player, Runnable {
+    private class TranspositionElement
+    {
+        private double eval;
+        private int depth;
+        private TranspositionElement(int depth, double eval)
+        {
+            this.eval = eval;
+            this.depth = depth;
+        }
+    }
+    
+    private static final HashMap<Long, TranspositionElement> transpositionMap = new HashMap<>();
+    private static final int MAX_HASH_SIZE = 100000;
+
+    
     private boolean isBook; //Not currently used, but 
     private double isOpening; //Degree to which computer thinks the game is in the opening stage
     private double isMiddlegame; //Same for middlegame
@@ -56,7 +72,7 @@ public class ComputerPlayer implements Player, Runnable {
     
     private long searchStartTime;
     
-    public static Move lastAnalyzed;
+    public static Move lastAnalyzed;   
     
     //private static final int[] WINDOW_SIZES = new int[]{20, 20, 20, 15, 15, 15, 15}; // Not currently used
     
@@ -309,7 +325,8 @@ public class ComputerPlayer implements Player, Runnable {
     
     //Find next move
     private Move determineMove(char[][] position, LinkedList<Move> legalMoves, long zobrist)
-    {
+    {       
+        
         if (legalMoves.size() == 1) //If there is only one legal move, return that
             return legalMoves.get(0);
         
@@ -484,6 +501,7 @@ public class ComputerPlayer implements Player, Runnable {
         
         System.out.println("Move chosen: " + choice);
         System.out.println("Depth reached: " + currentDepth);
+        System.out.println("Transposition size: " + transpositionMap.size());
         System.out.println("Leaves: " + leaves);
         System.out.println("Evaluation: " + choice.getValue());
         System.out.println("Rough eval: " + evaluateLeaf(position));
@@ -496,6 +514,9 @@ public class ComputerPlayer implements Player, Runnable {
         
         System.out.println("Avg time per move: " + totalTime/totalMovesAnalyzed+"\n\n");
         System.out.println("\n" + Board.getMoves()+"\n");
+        
+        if (transpositionMap.size() > MAX_HASH_SIZE*0.75)
+            transpositionMap.clear();
         
         return choice;
     }
@@ -871,14 +892,28 @@ public class ComputerPlayer implements Player, Runnable {
                 }
             }*/
             
+            boolean inTransposition = false;
+            if (transpositionMap.containsKey(zobrist))
+            {
+                TranspositionElement element = transpositionMap.get(zobrist);
+                
+                if (element.depth >= maxDepth-depth && element.eval < 1000 && element.eval > -1000)
+                {
+                    inTransposition = true;
+                    candidateMove.setValue(element.eval);
+                    //System.out.println("Severed at " + depth);
+                }
+            }
+            
             if (previousPositions.contains(zobrist))
             {
                 candidateMove.setValue(0);
                 isRepeat = true;
             }
-
-            if (!isRepeat)
+            
+            if (!inTransposition && !isRepeat)
             {
+
                 lastAnalyzed = candidateMove;
                 if (abortSearch)
                 {
@@ -906,6 +941,13 @@ public class ComputerPlayer implements Player, Runnable {
 
                 if (!cutoff)
                     candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, zobrist).getValue());
+
+
+                if (transpositionMap.size() < MAX_HASH_SIZE && maxDepth-depth > 2)
+                {
+                    transpositionMap.put(zobrist, new TranspositionElement(maxDepth-depth, candidateMove.getValue()));                        
+                }
+            
             }
             zobrist = Board.unmakeMove(position, candidateMove, 0);
             
@@ -965,13 +1007,17 @@ public class ComputerPlayer implements Player, Runnable {
             switch (result)
             {
                 case 2:
-                    move.setValue(50000-depth);
+                    move.setValue(50000-depth);                    
+                    //transpositionMap.put(zobrist, new TranspositionElement(maxDepth-depth, move.getValue()));
                     break;
                 case 1:
                     move.setValue(-50000+depth);
+                    //transpositionMap.put(zobrist, new TranspositionElement(maxDepth-depth, move.getValue()));
                     break;
                 case 0:
                     move.setValue(0);
+                    //transpositionMap.put(zobrist, new TranspositionElement(maxDepth-depth, move.getValue()));
+                    break;
             }
         }
         
