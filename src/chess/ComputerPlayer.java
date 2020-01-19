@@ -26,8 +26,8 @@ public class ComputerPlayer implements Player, Runnable {
         }
     }
     
-    private static final HashMap<Long, TranspositionElement> transpositionMap = new HashMap<>();
-    private static final int MAX_HASH_SIZE = 100000;
+    private final HashMap<Long, TranspositionElement> transpositionMap = new HashMap<>();
+    private final int MAX_HASH_SIZE = 50000;
 
     
     private boolean isBook; //Not currently used, but 
@@ -37,7 +37,7 @@ public class ComputerPlayer implements Player, Runnable {
     
     private boolean isThinking; //Whether the computer is currently determining its next move
     private Move move; //Move the computer has decided upon
-    private static int movesAnalyzed; //Metric for number of moves analyzed on the last move
+    private int movesAnalyzed; //Metric for number of moves analyzed on the last move
     private boolean isWhite; //Whether the computer is white
     private final Thread thread; //Main thread the AI runs on
     
@@ -57,14 +57,14 @@ public class ComputerPlayer implements Player, Runnable {
     private static final int EXPECTED_TIME_MULT_ENDGAME = 25; //In the endgame, the multiplier is expected to be lower due to fewer possible branches per move.
     
     //private static Move[] principalVariation;
-    private static LinkedList<Move> principalVariation; //Not currently used. If implemented, this would allow the AI to return its expected variation for its chosen move.
+    private LinkedList<Move> principalVariation; //Not currently used. If implemented, this would allow the AI to return its expected variation for its chosen move.
     
-    private static int totalMovesAnalyzed; //Metric for number of moves analzyed across all moves
-    private static double totalTime; //Time spent on all moves
+    private int totalMovesAnalyzed; //Metric for number of moves analzyed across all moves
+    private double totalTime; //Time spent on all moves
     
     private int moves;
     
-    private static int leaves; //Metric for number of leaves reached
+    private int leaves; //Metric for number of leaves reached
     
     private boolean abortSearch; //Whether or not the search is to be immediately aborted
     
@@ -72,7 +72,7 @@ public class ComputerPlayer implements Player, Runnable {
     
     private long searchStartTime;
     
-    public static Move lastAnalyzed;   
+    public Move lastAnalyzed;   
     
     //private static final int[] WINDOW_SIZES = new int[]{20, 20, 20, 15, 15, 15, 15}; // Not currently used
     
@@ -515,8 +515,8 @@ public class ComputerPlayer implements Player, Runnable {
         System.out.println("Avg time per move: " + totalTime/totalMovesAnalyzed+"\n\n");
         System.out.println("\n" + Board.getMoves()+"\n");
         
-        if (transpositionMap.size() > MAX_HASH_SIZE*0.75)
-            transpositionMap.clear();
+        //if (transpositionMap.size() > MAX_HASH_SIZE*0.75)
+        transpositionMap.clear();
         
         return choice;
     }

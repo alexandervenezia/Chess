@@ -28,23 +28,33 @@ public class Display extends JPanel {
     private final int DISPLAY_HEIGHT; 
     
     private Board board;
+    private Menu menu;
+    
+    private boolean started;
                             
     public Display(int width, int height)
     {       
         this.DISPLAY_WIDTH = width;
         this.DISPLAY_HEIGHT = height;
+        started = false;
         super.setBackground(BACKGROUND_COL);
     }
     
     public void update(double delta)
     {
-        board.update(delta);
+        if (started)
+            board.update(delta);
+        else
+            menu.update();
         paintImmediately(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT); //Redraw graphics   
     }
     private void render(Graphics g)
     {
         super.paintComponent(g);
-        board.render(g);
+        if (started)
+            board.render(g);
+        else
+            menu.render(g);
     }
     
     private void renderUI(Graphics g) {}
@@ -65,5 +75,23 @@ public class Display extends JPanel {
     public void setBoard(Board board)
     {
         this.board = board;
+    }
+    
+    public void setMenu(Menu menu)
+    {
+        this.menu = menu;
+    }
+    
+    public void start(int whiteMinutes, int blackMinutes, int whiteSeconds, int blackSeconds, int increment, int delay)
+    {
+        if (!started)
+        {
+            started = true;
+            board.setTimeControl(whiteMinutes, blackMinutes, whiteSeconds, blackSeconds, increment, delay);
+            board.start(this);
+            this.removeMouseListener(menu);
+            
+            menu = null;
+        }        
     }
 }

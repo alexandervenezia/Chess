@@ -7,11 +7,10 @@
  * 
  * Possible future additions:
  *  -   Display principal variation
- *  -   Transposition table for improved AI
  *  -   Ability to modify time control in application
  *  -   Ability to pit AI versus AI in application
  *  -   Opening book
- *  -  Draw detection for insufficient material, 50 move rule and 3-fold repetition
+ *  -   Draw detection for insufficient material, 50 move rule and 3-fold repetition
  */
 
 package chess;
@@ -26,6 +25,7 @@ public class Chess extends JFrame {
     
     private final Display display;
     private final Board board;
+    private final Menu menu;
     
     private long lastTime; //Time of the last frame
     
@@ -42,7 +42,9 @@ public class Chess extends JFrame {
         gameHeight = 950; //950
         display = new Display(gameWidth, gameHeight);
         board = new Board(display);
+        menu = new Menu(display);
         display.setBoard(board);
+        display.setMenu(menu);
         
         super.add(display);
     }

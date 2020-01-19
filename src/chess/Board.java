@@ -31,7 +31,7 @@ public class Board {
     
     //Time for each player in minutes/seconds for convenience
     private static final int WHITE_TIME_SECONDS = 3; //White's time in seconds, should be 0-60
-    private static final int WHITE_TIME_MINUTES = 1; //White's time in minutes
+    private static final int WHITE_TIME_MINUTES = 1;//White's time in minutes
     
     private static final int BLACK_TIME_SECONDS =  3;
     private static final int BLACK_TIME_MINUTES = 1;
@@ -39,7 +39,7 @@ public class Board {
     //Calculate white and black's time in milliseconds
     private static final int WHITE_START_TIME = (WHITE_TIME_MINUTES*60 + WHITE_TIME_SECONDS)*1000;
     private static final int BLACK_START_TIME = (BLACK_TIME_MINUTES*60 + BLACK_TIME_SECONDS)*1000;
-    private static final int INCREMENT = 2; //Seconds added to a player's clock every time they make a move
+    private static final int INCREMENT = 0; //Seconds added to a player's clock every time they make a move
     private static final int DELAY = 0; //Seconds before a player begins to lose time
     
     private static Timer clock; //Chess clock to enforce maximum time per move
@@ -131,14 +131,14 @@ public class Board {
     /*
     private static final char[][] BOARD = 
     {
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', 'P', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'P', ' ', ' ', ' ', 'K', 'P', ' ', ' '},
-        {' ', ' ', ' ', ' ', 'P', ' ', ' ', ' '},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {' ', ' ', ' ', 'p', ' ', ' ', ' ', ' '},
-        {' ', 'p', ' ', ' ', 'k', ' ', 'p', 'p'},
-        {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
+        {'B', ' ', ' ', ' ', ' ', ' ', 'K', ' '},
+        {' ', ' ', 'Q', ' ', ' ', 'P', ' ', 'P'},
+        {'P', ' ', ' ', ' ', 'P', 'P', ' ', 'q'},
+        {' ', ' ', 'P', ' ', ' ', ' ', ' ', ' '},
+        {' ', ' ', 'p', ' ', 'p', ' ', ' ', ' '},
+        {' ', 'R', ' ', 'p', ' ', 'n', ' ', ' '},
+        {' ', ' ', ' ', ' ', ' ', 'p', 'p', 'p'},
+        {'r', ' ', ' ', ' ', ' ', ' ', ' ', 'k'},
         {' ', '0', '0', '3', '3', '3', ' ', ' '} //Last line represents meta information. The first entry is for en-passant captures. Blank for no capture, number 0-7 to represent file of possible en-passant capture. Up to two pawns can execute an en-passant capture, but only one pawn may be thus captured.
             //The second entry is for the number of repeated moves. The third entry is for the number of moves since capture or pawn move. The fourth entry is for whether or not the king has moved, 0 for neither king having moved, 1 for the white king only, 2 for the black king only, 3 for both kings
             //The fifth and sixth are for whether the rooks have moved, queenside and kingside respectively. These work the same as the king. The seventh and eighth entries are placeholders
@@ -176,32 +176,43 @@ public class Board {
         PIECES.put('R', BLACK_ROOK);
         PIECES.put('Q', BLACK_QUEEN);
         PIECES.put('K', BLACK_KING);
+                
         
-        
-        
-        display.addMouseListener(player1);
-        //display.addMouseListener(player2);
        
-        clock = new Timer(WHITE_START_TIME, BLACK_START_TIME, INCREMENT, DELAY);
-        
-        //player1.setClock(clock);
-        player2.setClock(clock);
         
         isWhiteTurn = true;
         
-        if (isWhiteTurn)
-            player1.startThinking();
-        else
-            player2.startThinking();
         
         isGameOver = false;
         playerOneWon = false;
         playerTwoWon = false;
         
         initiateZobrist(); //Generate zobrist values and calculate the initial zobrist hash
+                              
         
+    }
+    
+    public void start(Display display)
+    {
+        display.addMouseListener(player1);
+        //display.addMouseListener(player2);
         
+        //player1.setClock(clock);
+        player2.setClock(clock);
         
+        if (isWhiteTurn)
+            player1.startThinking();
+        else
+            player2.startThinking();
+        
+    }
+    
+    public void setTimeControl(int whiteMinutes, int blackMinutes, int whiteSeconds, int blackSeconds, int increment, int delay)
+    {
+        int whiteTime = (whiteMinutes*60 + whiteSeconds)*1000;
+        int blackTime = (blackMinutes*60 + blackSeconds)*1000;
+        
+        clock = new Timer(whiteTime, blackTime, increment, delay);
         
         
     }
