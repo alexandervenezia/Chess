@@ -95,9 +95,10 @@ public class Board {
     
     private static char nextPromotion = 'q'; //What the next pawn that reaches the 8th rank will promote to
     
-    private static int reachedPositionsIndex = 0; //Where in reachedPositions to store next game position
     //private static final long[] reachedPositions = new long[30]; //Stores zobrist hashes of previous positions to detect 3-fold repetition. The value of 30 is abritrary, however it is exceedingly unlikely to reach 3-fold repetition over a span that large and would likely be missed in an OTB game anyway.
     private static final HashSet<Long> reachedPositions = new HashSet<>();
+    private static final HashMap<Long, Integer> repeatedPositions = new HashMap<>();
+    
     
     private static final int[] POSITION = {120, 25}; //Position of main game board
     private static final int[] BLACK_CLOCK_POSITION = {1020, 430}; //Position of black's clock
@@ -108,7 +109,7 @@ public class Board {
     
     private static String moveLog = ""; //List of all moves played in algebraic notation, displayed to the console after every move
     
-    private boolean allowPremoves = true; //Allows the human player to choose a move while the computer is deliberating, which will be played immediately after the computer's move, if it is legal
+    private static boolean allowPremoves = false; //Allows the human player to choose a move while the computer is deliberating, which will be played immediately after the computer's move, if it is legal
     private boolean blindfold = false; //If set to true, no pieces are rendered to challenge the human's memory.
     
     
@@ -609,8 +610,8 @@ public class Board {
             
             else
             {
-                g.setColor(Color.GRAY);
-                g.drawString("Game is drawn", 325, 500);
+                g.setColor(Color.DARK_GRAY);
+                g.drawString("Game is drawn", 275, 500);
             }
             
         }
@@ -1052,7 +1053,41 @@ public class Board {
                 reachedPositionsIndex = 0;
             }
             */
-            reachedPositions.add(zobrist);
+            
+            
+            zobrist = calculateZobrist(position);
+            
+            if (!reachedPositions.contains(zobrist))
+                reachedPositions.add(zobrist);
+            else
+            {
+                System.out.println(zobrist);
+                System.out.println("Repetition");
+                
+                int occurrences = 0;
+                
+                if (repeatedPositions.containsKey(zobrist))
+                    occurrences = repeatedPositions.get(zobrist);
+                
+                repeatedPositions.put(zobrist, occurrences+1);
+                
+                if (occurrences+1 >= 3)
+                {
+                    //Game is drawn by threefold repetition
+                    isGameOver = true;
+                    movedFrom = move.getStartSquare();
+                    movedTo = move.getEndSquare();
+                    
+                    clock.stop();
+                    System.out.println("Game over. The game is drawn due to threefold repetition.");
+                    System.out.println(moveLog);
+                    
+                    playerOneWon = false;
+                    playerTwoWon = false;
+                    
+                    return zobrist;
+                }
+            }
             
             movedFrom = move.getStartSquare();
             movedTo = move.getEndSquare();
@@ -2039,12 +2074,12 @@ public class Board {
             {
                 if (position[8][4] == '0' || position[8][4] == '2')
                 {
-                    if (position[y][x-1] == ' ' && position[y][x-2] == ' ' && position[y][x-3] == ' ' && !isAttacked(position, false, x, y) && !isAttacked(position, false, x-1, y) && !isAttacked(position, false, x-2, y))
+                    if (position[y][x-1] == ' ' && position[y][x-2] == ' ' && position[y][x-3] == ' ' && !isAttacked(position, false, x, y) && !isAttacked(position, false, x-1, y) && !isAttacked(position, false, x-2, y) && position[y][x-4] == 'r')
                         addMove(new Move(new Point(x, y), new Point(x-2, y)), legalMoves, position);
                 }
                 if (position[8][5] == '0' || position[8][5] == '2')
                 {
-                    if (position[y][x+1] == ' ' && position[y][x+2] == ' ' && !isAttacked(position, false, x, y) && !isAttacked(position, false, x+1, y) && !isAttacked(position, false, x+2, y))
+                    if (position[y][x+1] == ' ' && position[y][x+2] == ' ' && !isAttacked(position, false, x, y) && !isAttacked(position, false, x+1, y) && !isAttacked(position, false, x+2, y) && position[y][x+3] == 'r')
                         addMove(new Move(new Point(x, y), new Point(x+2, y)), legalMoves, position);
                 }
             }
@@ -2055,12 +2090,12 @@ public class Board {
             {
                 if (position[8][4] == '0' || position[8][4] == '1')
                 {
-                    if (position[y][x-1] == ' ' && position[y][x-2] == ' ' && position[y][x-3] == ' ' && !isAttacked(position, true, x, y) && !isAttacked(position, true, x-1, y) && !isAttacked(position, true, x-2, y))
+                    if (position[y][x-1] == ' ' && position[y][x-2] == ' ' && position[y][x-3] == ' ' && !isAttacked(position, true, x, y) && !isAttacked(position, true, x-1, y) && !isAttacked(position, true, x-2, y) && position[y][x-4] == 'R')
                         addMove(new Move(new Point(x, y), new Point(x-2, y)), legalMoves, position);
                 }
                 if (position[8][5] == '0' || position[8][5] == '1')
                 {
-                    if (position[y][x+1] == ' ' && position[y][x+2] == ' ' && !isAttacked(position, true, x, y) && !isAttacked(position, true, x+1, y) && !isAttacked(position, true, x+2, y))
+                    if (position[y][x+1] == ' ' && position[y][x+2] == ' ' && !isAttacked(position, true, x, y) && !isAttacked(position, true, x+1, y) && !isAttacked(position, true, x+2, y) && position[y][x+3] == 'R')
                         addMove(new Move(new Point(x, y), new Point(x+2, y)), legalMoves, position);
                 }
             }
@@ -2347,5 +2382,10 @@ public class Board {
     public static String getMoves()
     {
         return moveLog;
+    }
+    
+    public static boolean premoveEnabled()
+    {
+        return allowPremoves;
     }
 }

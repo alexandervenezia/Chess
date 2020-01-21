@@ -67,7 +67,7 @@ class HumanPlayer implements Player, MouseListener{
         }
         else
         {
-            if (e.getButton() == 1)
+            if (e.getButton() == 1 && Board.premoveEnabled())
             {
                 if (Board.hasSelected() && premove == null)
                 {
@@ -78,7 +78,7 @@ class HumanPlayer implements Player, MouseListener{
                 else
                     Board.setSelected(e.getPoint());
             }
-            else
+            else if (e.getButton() != 1)
             {
                 Board.deSelect();
                 premove = null;
@@ -110,7 +110,7 @@ class HumanPlayer implements Player, MouseListener{
         }
         else
         {
-            if (e.getButton() == 1)
+            if (e.getButton() == 1 && Board.premoveEnabled())
             {
                 if (Board.hasSelected())
                 {

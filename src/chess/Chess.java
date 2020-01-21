@@ -10,7 +10,7 @@
  *  -   Ability to modify time control in application
  *  -   Ability to pit AI versus AI in application
  *  -   Opening book
- *  -   Draw detection for insufficient material, 50 move rule and 3-fold repetition
+ *  -   Draw detection for insufficient material, 50 move rule
  */
 
 package chess;
