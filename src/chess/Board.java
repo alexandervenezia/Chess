@@ -109,7 +109,7 @@ public class Board {
     
     private static String moveLog = ""; //List of all moves played in algebraic notation, displayed to the console after every move
     
-    private static boolean allowPremoves = false; //Allows the human player to choose a move while the computer is deliberating, which will be played immediately after the computer's move, if it is legal
+    private static boolean allowPremoves = true; //Allows the human player to choose a move while the computer is deliberating, which will be played immediately after the computer's move, if it is legal
     private boolean blindfold = false; //If set to true, no pieces are rendered to challenge the human's memory.
     
     

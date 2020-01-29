@@ -28,7 +28,7 @@ public class ComputerPlayer implements Player, Runnable {
     
     private final HashMap<Long, TranspositionElement> transpositionMap = new HashMap<>();
     private final int MAX_HASH_SIZE = 50000;
-
+    private final LinkedList<Long> transpositionMapOrder = new LinkedList<>();
     
     private boolean isBook; //Not currently used, but 
     private double isOpening; //Degree to which computer thinks the game is in the opening stage
@@ -516,7 +516,7 @@ public class ComputerPlayer implements Player, Runnable {
         System.out.println("\n" + Board.getMoves()+"\n");
         
         //if (transpositionMap.size() > MAX_HASH_SIZE*0.75)
-        transpositionMap.clear();
+        //transpositionMap.clear();
         
         return choice;
     }
@@ -943,8 +943,17 @@ public class ComputerPlayer implements Player, Runnable {
                     candidateMove.setValue(minmax(position, depth+1, maxDepth, !isWhite, alpha, beta, null, zobrist).getValue());
 
 
-                if (transpositionMap.size() < MAX_HASH_SIZE && maxDepth-depth > 2)
+                if (transpositionMap.size() < MAX_HASH_SIZE && maxDepth-depth > 2 && (maxDepth-depth)%2 == 1)
                 {
+                    if (!inTransposition)
+                    {
+                        transpositionMapOrder.add(zobrist);
+                        if (transpositionMapOrder.size() > MAX_HASH_SIZE)
+                        {
+                            long removed = transpositionMapOrder.removeFirst();
+                            transpositionMap.remove(removed);
+                        }
+                    }
                     transpositionMap.put(zobrist, new TranspositionElement(maxDepth-depth, candidateMove.getValue()));                        
                 }
             

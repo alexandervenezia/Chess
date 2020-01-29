@@ -11,6 +11,7 @@
  *  -   Ability to pit AI versus AI in application
  *  -   Opening book
  *  -   Draw detection for insufficient material, 50 move rule
+ *  -   Play back game after completion
  */
 
 package chess;
