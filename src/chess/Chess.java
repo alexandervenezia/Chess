@@ -12,6 +12,8 @@
  *  -   Opening book
  *  -   Draw detection for insufficient material, 50 move rule
  *  -   Play back game after completion
+ *  -   Ability to play as either color
+ *  -   Fix occasional null pointer error thrown when user selects time control. It seems to be timing related.
  */
 
 package chess;

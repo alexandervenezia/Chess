@@ -17,8 +17,8 @@ public class Menu implements MouseListener {
     private class Button
     {
         private final java.awt.Font font = new java.awt.Font("Cambria", java.awt.Font.BOLD, 50);   
-        private final Color outerColor = new Color(50, 75, 200);
-        //private final Color innerColor
+        private Color outerColor = new Color(50, 75, 200);
+        private Color textColor = Color.WHITE;
         
         private final int[] position;
         private final int width;
@@ -38,13 +38,13 @@ public class Menu implements MouseListener {
             g.setColor(outerColor);
             g.fillRoundRect(position[0], position[1], width, height, 20, 20);
             
-            g.setColor(Color.WHITE);
+            g.setColor(textColor);
             g.setFont(font);
             
             FontMetrics metrics = g.getFontMetrics();
             
             int x = position[0] + (width - metrics.stringWidth(message)) / 2;
-            int y = position[1] + ((height - metrics.getHeight()) / 2) + (int)(metrics.getAscent()*0.7);
+            int y = position[1] + ((height - metrics.getHeight()) / 2) + (int)(metrics.getAscent());
             
             g.drawString(message, x, y);
         }
@@ -58,6 +58,40 @@ public class Menu implements MouseListener {
         {
             if (x > position[0] && y > position[1] && x < position[0]+width && y < position[1]+height)
                 onClick();
+        }
+    }
+    
+    private class ColorSelectButton extends Button
+    {
+        private static final int WIDTH = 750;
+        private static final int HEIGHT = 75;
+        private String color = "white";
+        
+        private ColorSelectButton(int[] position)
+        {
+            super(position, WIDTH, HEIGHT);
+            super.message = "You are : " + color + ". Click to switch.";
+            super.outerColor = Color.WHITE;
+            super.textColor = Color.BLACK;
+        }
+        
+        @Override
+        protected void onClick()
+        {
+            if (color == "white")
+            {
+                color = "black";
+                super.outerColor = Color.BLACK;
+                super.textColor = Color.WHITE;
+            }
+            else
+            {
+                color = "white";
+                super.outerColor = Color.WHITE;
+                super.textColor = Color.BLACK;
+            }
+            
+            super.message = "You are : " + color + ". Click to switch.";
         }
     }
     
@@ -116,7 +150,7 @@ public class Menu implements MouseListener {
         @Override
         protected void onClick()
         {
-            display.start(minutes, minutes, seconds, seconds, increment, delay);
+            display.start(minutes, minutes, seconds, seconds, increment, delay, colorButton.color == "white");
         }
     }
     
@@ -134,7 +168,9 @@ public class Menu implements MouseListener {
     
     private final Button customTime = new Button(new int[]{770, 620}, 300, 250);
     
-    private final Button[] buttons = new Button[] {bulletTime, bulletTimeDelay, threeMinute, threeMinuteIncrement, fiveMinute, fiveMinuteIncrement, tenMinuteDelay, fifteenMinuteIncrement, customTime};
+    private final ColorSelectButton colorButton = new ColorSelectButton(new int[]{225, 10});
+    
+    private final Button[] buttons = new Button[] {bulletTime, bulletTimeDelay, threeMinute, threeMinuteIncrement, fiveMinute, fiveMinuteIncrement, tenMinuteDelay, fifteenMinuteIncrement, customTime, colorButton};
     
     protected final Display display;
     

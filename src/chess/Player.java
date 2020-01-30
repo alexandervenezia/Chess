@@ -13,4 +13,7 @@ public interface Player {
     public Move getPremove();
     public void startThinking();
     public void stopThinking();
+    public void clearPremoves();
+    public boolean isHuman();
+    public void setClock(Timer timer);
 }

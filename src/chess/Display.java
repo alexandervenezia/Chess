@@ -82,12 +82,13 @@ public class Display extends JPanel {
         this.menu = menu;
     }
     
-    public void start(int whiteMinutes, int blackMinutes, int whiteSeconds, int blackSeconds, int increment, int delay)
+    public void start(int whiteMinutes, int blackMinutes, int whiteSeconds, int blackSeconds, int increment, int delay, boolean playerIsWhite)
     {
         if (!started)
         {
-            started = true;
             board.setTimeControl(whiteMinutes, blackMinutes, whiteSeconds, blackSeconds, increment, delay);
+            board.setColors(playerIsWhite);
+            started = true;
             board.start(this);
             this.removeMouseListener(menu);
             

@@ -153,4 +153,12 @@ class HumanPlayer implements Player, MouseListener{
         return premove;
     }
     
+    public boolean isHuman()
+    {
+        return true;
+    }
+    
+    @Override
+    public void setClock(Timer timer) {} //Intentionally empty
+    
 }

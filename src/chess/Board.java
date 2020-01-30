@@ -79,10 +79,15 @@ public class Board {
     
     private static final HashMap PIECES = new HashMap<Character, Image>(); //Maps character representation of chess pieces to their images
     
+    /*
     private static final HumanPlayer player1 = new HumanPlayer(true);
     //private static final ComputerPlayer player1 = new ComputerPlayer(true);
     private static final ComputerPlayer player2 = new ComputerPlayer(false);
     //private static final HumanPlayer player2 = new HumanPlayer(false);
+    */
+    
+    private static Player player1;
+    private static Player player2;
     
     private static Point selected = new Point(-1, -1); //Currently selected square
     private static Point movedFrom = new Point(-1, -1); //Square a piece moved from
@@ -105,10 +110,11 @@ public class Board {
     private static final int[] WHITE_CLOCK_POSITION = {1020, 520}; //Position of white's clock
     private static final int[] PROMOTION_PANEL_POSITION = {0, 225};
     
-    private static final boolean FLIP_COLORS = false; //Not properly implemented yet
+    private static boolean flipColors = false; //Not properly implemented yet
     
     private static String moveLog = ""; //List of all moves played in algebraic notation, displayed to the console after every move
     
+    //TODO: Fix premoves for when the human is playing black
     private static boolean allowPremoves = true; //Allows the human player to choose a move while the computer is deliberating, which will be played immediately after the computer's move, if it is legal
     private boolean blindfold = false; //If set to true, no pieces are rendered to challenge the human's memory.
     
@@ -129,6 +135,8 @@ public class Board {
             //The fifth and sixth are for whether the rooks have moved, queenside and kingside respectively. These work the same as the king. The seventh and eighth entries are placeholders
             //and currently have no meaning.
     };
+    
+    
     /*
     private static final char[][] BOARD = 
     {
@@ -194,18 +202,40 @@ public class Board {
     }
     
     public void start(Display display)
-    {
-        display.addMouseListener(player1);
-        //display.addMouseListener(player2);
-        
-        //player1.setClock(clock);
-        player2.setClock(clock);
+    {       
+        if (player1.isHuman())
+        {
+            display.addMouseListener((HumanPlayer)player1);
+            player2.setClock(clock);
+        }
+        else
+        {
+            display.addMouseListener((HumanPlayer)player2);
+            player1.setClock(clock);
+        }
         
         if (isWhiteTurn)
             player1.startThinking();
         else
             player2.startThinking();
         
+    }
+    
+    public void setColors(boolean humanIsWhite)
+    {
+        if (humanIsWhite)
+        {
+            player1 = (Player)new HumanPlayer(true);
+            player2 = (Player)new ComputerPlayer(false);                        
+        }
+        else
+        {
+            player1 = (Player)new ComputerPlayer(true);
+            player2 = (Player)new HumanPlayer(false);
+        }
+        
+        
+        flipColors = !humanIsWhite;
     }
     
     public void setTimeControl(int whiteMinutes, int blackMinutes, int whiteSeconds, int blackSeconds, int increment, int delay)
@@ -404,7 +434,9 @@ public class Board {
                 clock.stop();
                 System.out.println("White wins.");
             }
-                
+
+            boolean checkPremoves = false;
+            
             if (player1.getMoveDecision() != null && isWhiteTurn) //If it is white's turn and they've decided on their move
             {
                 if (!clock.isRunning())
@@ -424,6 +456,8 @@ public class Board {
                 if (!isGameOver)
                     player2.startThinking();
                 isWhiteTurn = !isWhiteTurn;
+                
+                checkPremoves = true;
             }
             else if (player2.getMoveDecision() != null && !isWhiteTurn) //Black's turn and they've made a move
             {
@@ -444,23 +478,44 @@ public class Board {
                 if (!isGameOver)
                     player1.startThinking();
                 
-                if (player1.getPremove() != null && allowPremoves) //We only check for premoves by white, the human player
+                checkPremoves = true;
+                
+                
+                
+                isWhiteTurn = !isWhiteTurn;
+            }
+            
+            if (checkPremoves)
+            {
+                Player humanPlayer;
+                Player computerPlayer;
+                
+                if (player1.isHuman())
                 {
-                    Move premove = player1.getPremove();
+                    humanPlayer = player1;
+                    computerPlayer = player2;
+                }
+                else
+                {
+                    humanPlayer = player2;
+                    computerPlayer = player1;
+                }
+                
+                if (humanPlayer.getPremove() != null && allowPremoves) //We only check for premoves by white, the human player
+                {
+                    Move premove = humanPlayer.getPremove();
                     
-                    if (Board.isLegalMove(premove, !isWhiteTurn)) //Check if premove is a legal move, and if it is, make the move
+                    if (Board.isLegalMove(premove, isWhiteTurn)) //Check if premove is a legal move, and if it is, make the move
                     {
                         currentZobrist = makeMove(BOARD, premove, true, currentZobrist);
                         isWhiteTurn = !isWhiteTurn;
                         clock.flip();
-                        player1.stopThinking();
-                        player2.startThinking();
+                        humanPlayer.stopThinking();
+                        computerPlayer.startThinking();
                     }
                     else
-                        player1.clearPremoves();
+                        humanPlayer.clearPremoves();
                 }
-                
-                isWhiteTurn = !isWhiteTurn;
             }
         }
     }
@@ -474,8 +529,9 @@ public class Board {
         {
             for (int j = 0; j < 8; j++)
             {
-                g.setColor(darkSquare ? DARK_COL : LIGHT_COL);
+                g.setColor(darkSquare ? DARK_COL : LIGHT_COL);                
                 
+                /*
                 if (j == movedFrom.x && i == movedFrom.y)
                     g.setColor(FROM_COL);
                 else if (j == movedTo.x && i == movedTo.y)
@@ -483,23 +539,89 @@ public class Board {
                 
                 if (j == selected.x && i == selected.y)
                     g.setColor(SELECTED_COL);
+                */
+                
+                int x, y;
+                
+                if (flipColors)
+                {
+                    x = (7-j);
+                    y = (7-i);
+                }
+                else
+                {
+                    x = j;
+                    y = i;
+                }
                 
                 if (player1.getPremove() != null && allowPremoves) //Render premove highlight if applicable
                 {
-                    if (j == player1.getPremove().getStartSquare().x && i == player1.getPremove().getStartSquare().y)
+                    if (x == player1.getPremove().getStartSquare().x && y == player1.getPremove().getStartSquare().y)
                         g.setColor(PREMOVE_COL);
-                    else if (j == player1.getPremove().getEndSquare().x && i == player1.getPremove().getEndSquare().y)
+                    else if (x == player1.getPremove().getEndSquare().x && y == player1.getPremove().getEndSquare().y)
+                        g.setColor(PREMOVE_COL);
+                }
+                
+                if (player2.getPremove() != null && allowPremoves)
+                {
+                    if (x == player2.getPremove().getStartSquare().x && y == player2.getPremove().getStartSquare().y)
+                        g.setColor(PREMOVE_COL);
+                    else if (x == player2.getPremove().getEndSquare().x && y == player2.getPremove().getEndSquare().y)
                         g.setColor(PREMOVE_COL);
                 }
                 
                 g.fillRect(POSITION[0]+j*SQUARE_SIZE, POSITION[1]+i*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
                 
-                if (!blindfold) //Render piece at board position if blindfold isn't enabled
-                    renderPiece(g, BOARD[i][j], POSITION[0]+j*SQUARE_SIZE, POSITION[1]+i*SQUARE_SIZE);
+                
                 
                 darkSquare = !darkSquare;
             }
             darkSquare = !darkSquare;
+        }
+        
+        g.setColor(FROM_COL);
+        
+        if (movedFrom.x != -1)
+        {
+            if (flipColors)
+                g.fillRect(POSITION[0] + (7-movedFrom.x)*SQUARE_SIZE, POSITION[1] + (7-movedFrom.y)*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+            else
+                g.fillRect(POSITION[0] + movedFrom.x*SQUARE_SIZE, POSITION[1] + movedFrom.y*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+        }
+        
+        if (movedTo.x != -1)
+        {
+            g.setColor(TO_COL);
+
+            if (flipColors)
+                g.fillRect(POSITION[0] + (7-movedTo.x)*SQUARE_SIZE, POSITION[1] + (7-movedTo.y)*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+            else
+                g.fillRect(POSITION[0] + movedTo.x*SQUARE_SIZE, POSITION[1] + movedTo.y*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+        }
+        
+        if (selected.x != -1)
+        {
+            g.setColor(SELECTED_COL);
+
+            if (flipColors)
+                g.fillRect(POSITION[0] + (7-selected.x)*SQUARE_SIZE, POSITION[1] + (7-selected.y)*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+            else
+                g.fillRect(POSITION[0] + selected.x*SQUARE_SIZE, POSITION[1] + selected.y*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE);
+        }
+        
+        //Draw pieces
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                if (!blindfold) //Render piece at board position if blindfold isn't enabled
+                {
+                    if (flipColors)
+                        renderPiece(g, BOARD[i][j], POSITION[0]+(7-j)*SQUARE_SIZE, POSITION[1]+(7-i)*SQUARE_SIZE);
+                    else
+                        renderPiece(g, BOARD[i][j], POSITION[0]+j*SQUARE_SIZE, POSITION[1]+i*SQUARE_SIZE);
+                }
+            }
         }
         
         if (selected.x != -1 && selected.y != -1)
@@ -536,7 +658,10 @@ public class Board {
             seconds = "0" + seconds;
         }
         
-        g.drawString(minutes+":"+seconds, WHITE_CLOCK_POSITION[0], WHITE_CLOCK_POSITION[1]); //Render clock time
+        if (flipColors)
+            g.drawString(minutes+":"+seconds, BLACK_CLOCK_POSITION[0], BLACK_CLOCK_POSITION[1]); //Render clock time
+        else
+            g.drawString(minutes+":"+seconds, WHITE_CLOCK_POSITION[0], WHITE_CLOCK_POSITION[1]); //Render clock time
         
         time = clock.getBlackTime();
         
@@ -562,7 +687,10 @@ public class Board {
         
         g.setColor(Color.BLACK);
         
-        g.drawString(minutes+":"+seconds, BLACK_CLOCK_POSITION[0], BLACK_CLOCK_POSITION[1]);
+        if (flipColors)
+            g.drawString(minutes+":"+seconds, WHITE_CLOCK_POSITION[0], WHITE_CLOCK_POSITION[1]);
+        else
+            g.drawString(minutes+":"+seconds, BLACK_CLOCK_POSITION[0], BLACK_CLOCK_POSITION[1]);
         
         //Draw panel for selecting promotions
 
@@ -588,11 +716,20 @@ public class Board {
          }
          
          //Draw promotion options
-         g.drawImage(WHITE_KNIGHT, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*0+20, null);
-         g.drawImage(WHITE_BISHOP, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*1+20, null);
-         g.drawImage(WHITE_ROOK, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*2+20, null);
-         g.drawImage(WHITE_QUEEN, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*3+20, null);
-         
+         if (flipColors)
+         {
+            g.drawImage(BLACK_KNIGHT, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*0+20, null);
+            g.drawImage(BLACK_BISHOP, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*1+20, null);
+            g.drawImage(BLACK_ROOK, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*2+20, null);
+            g.drawImage(BLACK_QUEEN, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*3+20, null);             
+         }
+         else
+         {
+            g.drawImage(WHITE_KNIGHT, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*0+20, null);
+            g.drawImage(WHITE_BISHOP, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*1+20, null);
+            g.drawImage(WHITE_ROOK, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*2+20, null);
+            g.drawImage(WHITE_QUEEN, PROMOTION_PANEL_POSITION[0], PROMOTION_PANEL_POSITION[1]+SQUARE_SIZE*3+20, null);
+         }
          
         g.setFont(GAME_OVER_FONT);
         if (isGameOver)
@@ -656,19 +793,11 @@ public class Board {
     //Renders a piecec given a char representation
     private void renderPiece(Graphics g, char pieceCode, int x, int y)
     {
-        if (FLIP_COLORS)
-        {
-            if (Character.isUpperCase(pieceCode))
-                pieceCode = Character.toLowerCase(pieceCode);
-            else
-                pieceCode = Character.toUpperCase(pieceCode);
-        }
-        
         g.drawImage((Image) PIECES.get(pieceCode), x, y, null);
         if (pieceCode != ' ')
         {
             if (PIECES.get(pieceCode) == null)
-                System.out.println(pieceCode);
+                System.out.println("NULL PIECE " + pieceCode);
         }
     }
     
@@ -1009,9 +1138,12 @@ public class Board {
         {
             if (Character.isLowerCase(startPiece))
             {
-                if (move.getEndSquare().y == 0)
+                if ((move.getEndSquare().y == 0))
                 {
-                    position[move.getEndSquare().y][move.getEndSquare().x] = Character.toLowerCase(nextPromotion);
+                    if (flipColors)
+                        position[move.getEndSquare().y][move.getEndSquare().x] = move.getPromotingTo();
+                    else
+                        position[move.getEndSquare().y][move.getEndSquare().x] = Character.toLowerCase(nextPromotion);
                     move.setPromotion(true);
                 }
             }
@@ -1019,7 +1151,10 @@ public class Board {
             {
                 if (move.getEndSquare().y == 7)
                 {
-                    position[move.getEndSquare().y][move.getEndSquare().x] = move.getPromotingTo();//Character.toUpperCase(nextPromotion);
+                    if (flipColors)
+                        position[move.getEndSquare().y][move.getEndSquare().x] = Character.toUpperCase(nextPromotion);
+                    else
+                        position[move.getEndSquare().y][move.getEndSquare().x] = move.getPromotingTo();//Character.toUpperCase(nextPromotion);
                     move.setPromotion(true);
                 }
             }
@@ -2332,6 +2467,12 @@ public class Board {
             x = (coords.x-POSITION[0])/SQUARE_SIZE;
             y = (coords.y-POSITION[1])/SQUARE_SIZE;
             
+            if (flipColors)
+            {
+                x = 7-x;
+                y = 7-y;
+            }
+            
             return new Point(x, y);
         }
         return null;
@@ -2366,7 +2507,21 @@ public class Board {
     
     public static Point fromBoardCoords(Point coords)
     {
-        return new Point(coords.x*SQUARE_SIZE+POSITION[0]+SQUARE_SIZE/2, coords.y*SQUARE_SIZE+POSITION[1]+SQUARE_SIZE/2);
+        int x, y;
+        
+        if (flipColors)
+        {
+            x = (7-coords.x)*SQUARE_SIZE+POSITION[0]+SQUARE_SIZE/2;
+            y = (7-coords.y)*SQUARE_SIZE+POSITION[1]+SQUARE_SIZE/2;
+        }
+        else
+        {
+            x = coords.x*SQUARE_SIZE+POSITION[0]+SQUARE_SIZE/2;
+            y = coords.y*SQUARE_SIZE+POSITION[1]+SQUARE_SIZE/2;
+        }
+        
+        //return new Point(coords.x*SQUARE_SIZE+POSITION[0]+SQUARE_SIZE/2, coords.y*SQUARE_SIZE+POSITION[1]+SQUARE_SIZE/2);
+        return new Point(x, y);
     }
     
     public static void deSelect()

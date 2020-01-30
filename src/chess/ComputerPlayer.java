@@ -27,7 +27,7 @@ public class ComputerPlayer implements Player, Runnable {
     }
     
     private final HashMap<Long, TranspositionElement> transpositionMap = new HashMap<>();
-    private final int MAX_HASH_SIZE = 50000;
+    private final int MAX_HASH_SIZE = 25000;
     private final LinkedList<Long> transpositionMapOrder = new LinkedList<>();
     
     private boolean isBook; //Not currently used, but 
@@ -945,7 +945,7 @@ public class ComputerPlayer implements Player, Runnable {
 
                 if (transpositionMap.size() < MAX_HASH_SIZE && maxDepth-depth > 2 && (maxDepth-depth)%2 == 1)
                 {
-                    if (!inTransposition)
+                    if (!transpositionMap.containsKey(zobrist))
                     {
                         transpositionMapOrder.add(zobrist);
                         if (transpositionMapOrder.size() > MAX_HASH_SIZE)
@@ -1065,6 +1065,7 @@ public class ComputerPlayer implements Player, Runnable {
         move = null;
     }
     
+    @Override
     public void setClock(Timer clock)
     {
         this.clock = clock;
@@ -1076,8 +1077,10 @@ public class ComputerPlayer implements Player, Runnable {
         return null;
     }
     
-    public void clearPremoves()
+    public void clearPremoves() {} //Intentionally empty
+    
+    public boolean isHuman()
     {
-        
+        return false;
     }
 }
