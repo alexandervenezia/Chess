@@ -96,12 +96,12 @@ public class ComputerPlayer implements Player, Runnable {
     private static final double[][] BISHOP_POSITION_VALUES = new double[][]
     {
         {0.10, 0.10, 0.00, 0.10, 0.10, 0.00, 0.10, 0.10},
-        {0.20, 1.25, 0.10, 0.30, 0.30, 0.10, 1.25, 0.20},
+        {0.20, 1.00, 0.10, 0.30, 0.30, 0.10, 1.00, 0.20},
         {0.80, 0.80, 0.10, 0.35, 0.35, 0.10, 0.80, 0.80},
         {0.15, 0.30, 0.75, 0.20, 0.20, 0.75, 0.30, 0.15},
         {0.15, 0.30, 0.75, 0.20, 0.20, 0.75, 0.30, 0.15},
         {0.80, 0.80, 0.10, 0.35, 0.35, 0.10, 0.80, 0.80},
-        {0.20, 1.25, 0.10, 0.30, 0.30, 0.10, 1.25, 0.20},
+        {0.20, 1.00, 0.10, 0.30, 0.30, 0.10, 1.00, 0.20},
         {0.10, 0.10, 0.00, 0.10, 0.10, 0.00, 0.10, 0.10},
     };
     
@@ -696,7 +696,7 @@ public class ComputerPlayer implements Player, Runnable {
                         
                         break;
                     case 'r':
-                        value += 55;
+                        value += 60;
                         
                         availableMoves = Board.findRookMoves(position, true, j, i);
                         
@@ -707,7 +707,7 @@ public class ComputerPlayer implements Player, Runnable {
                         
                         break;
                     case 'R':
-                        value -= 55;
+                        value -= 60;
                         
                         availableMoves = Board.findRookMoves(position, false, j, i);
                         

@@ -166,11 +166,13 @@ public class Menu implements MouseListener {
     private final TimeControlButton tenMinuteDelay = new TimeControlButton(new int[]{150, 620}, 10, 0, 5, 0);
     private final TimeControlButton fifteenMinuteIncrement = new TimeControlButton(new int[]{460, 620}, 15, 0, 0, 5);
     
-    private final Button customTime = new Button(new int[]{770, 620}, 300, 250);
+    private final TimeControlButton thirtyMinuteDelay = new TimeControlButton(new int[]{770, 620}, 30, 0, 10, 0);
+    
+    private final Button customTime = new Button(new int[]{770, 620}, 300, 250); //Not implemented
     
     private final ColorSelectButton colorButton = new ColorSelectButton(new int[]{225, 10});
     
-    private final Button[] buttons = new Button[] {bulletTime, bulletTimeDelay, threeMinute, threeMinuteIncrement, fiveMinute, fiveMinuteIncrement, tenMinuteDelay, fifteenMinuteIncrement, customTime, colorButton};
+    private final Button[] buttons = new Button[] {bulletTime, bulletTimeDelay, threeMinute, threeMinuteIncrement, fiveMinute, fiveMinuteIncrement, tenMinuteDelay, fifteenMinuteIncrement, thirtyMinuteDelay, colorButton};
     
     protected final Display display;
     

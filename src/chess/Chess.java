@@ -7,19 +7,17 @@
  * 
  * Possible future additions:
  *  -   Display principal variation
- *  -   Ability to modify time control in application
+ *  -   Ability to modify time control in application <= Implemented in a basic form>
  *  -   Ability to pit AI versus AI in application
  *  -   Opening book
  *  -   Draw detection for insufficient material, 50 move rule
  *  -   Play back game after completion
- *  -   Ability to play as either color
- *  -   Fix occasional null pointer error thrown when user selects time control. It seems to be timing related.
+ *  -   Ability to play as either color <= Implemented>
+ *  -   Fix occasional null pointer error thrown when user selects time control. It seems to be timing related. <= Probably fixed>
  */
 
 package chess;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFrame;
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
 
@@ -68,9 +66,7 @@ public class Chess extends JFrame {
         if (waitTime > 0)
             try {
                 Thread.sleep(waitTime);
-        } catch (InterruptedException e) {
-            Logger.getLogger(Chess.class.getName()).log(Level.SEVERE, null, e);
-        }
+        } catch (InterruptedException e) {}
     }
     
     public static void main(String[] args) {
